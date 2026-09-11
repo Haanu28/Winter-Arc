@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WINTER ARC // Elite Command OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #04070c;
+            --bg-card: #0b111e;
+            --bg-panel: #121a2d;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-purple: #7000ff;
+            --accent-red: #ff3366;
+            --accent-gold: #ffb703;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-glow: rgba(0, 242, 254, 0.15);
+            --border-card: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; padding: 2rem; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-card);
+        }
+
+        .brand {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-group { display: flex; gap: 0.75rem; }
+        .btn {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-card);
+            background: var(--bg-panel);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn:hover { border-color: var(--accent-cyan); transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; border: none; }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 14px; padding: 1.5rem; }
+
+        /* Contract Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 99; align-items: center; justify-content: center; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--accent-cyan); width: 90%; max-width: 500px; border-radius: 16px; padding: 2rem; }
+
+        .hero { grid-column: span 12; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0b111e, #141c2e); border-left: 4px solid var(--accent-cyan); flex-wrap: wrap; gap: 1rem; }
+        
+        .countdown-box {
+            display: flex;
+            gap: 0.75rem;
+            background: var(--bg-panel);
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-card);
+            align-items: center;
+        }
+        .countdown-unit { text-align: center; }
+        .countdown-num { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent-cyan); }
+        .countdown-label { font-size: 0.65rem; color: var(--text-sub); text-transform: uppercase; }
+
+        .pillar-nav { grid-column: span 12; display: flex; gap: 1rem; }
+        .pillar-btn { flex: 1; padding: 0.8rem; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; text-align: center; color: var(--text-sub); cursor: pointer; font-weight: 600; }
+        .pillar-btn.active { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+        .tracker-main { grid-column: span 8; display: flex; flex-direction: column; gap: 1.5rem; }
+        .side-bar { grid-column: span 4; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .task-row { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--bg-panel); border-radius: 10px; margin-bottom: 0.75rem; border: 1px solid transparent; }
+        .task-row:hover { border-color: var(--border-glow); }
+        .task-row.done { opacity: 0.6; }
+        .task-row.done .task-title { text-decoration: line-through; }
+
+        .checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--text-sub); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .task-row.done .checkbox { background: var(--accent-cyan); border-color: var(--accent-cyan); color: #000; font-weight: 900; }
+
+        .journal-input {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            color: var(--text-main);
+            padding: 1rem;
+            margin-top: 0.75rem;
+            resize: vertical;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .journal-input:focus { outline: none; border-color: var(--accent-cyan); }
+
+        .badge-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 1rem; }
+        .badge { background: var(--bg-panel); padding: 0.75rem; border-radius: 8px; text-align: center; opacity: 0.3; filter: grayscale(1); font-size: 0.75rem; }
+        .badge.unlocked { opacity: 1; filter: grayscale(0); border: 1px solid var(--accent-gold); }
+
+        @media (max-width: 900px) { .tracker-main, .side-bar { grid-column: span 12; } }
+    </style>
+</head>
+<body>
+
+    <!-- Contract Modal -->
+    <div class="modal" id="contractModal">
+        <div class="modal-content">
+            <h2 style="font-family:'Orbitron'; color: var(--accent-cyan); margin-bottom: 0.5rem;">WINTER ARC CONTRACT</h2>
+            <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 1.5rem;">I commit to 90 days of deliberate execution. Zero excuses. Absolute discipline.</p>
+            <input type="text" id="signerName" placeholder="Enter Full Name" style="width: 100%; padding: 0.8rem; background: var(--bg-panel); border: 1px solid var(--border-card); color: #fff; border-radius: 8px; margin-bottom: 1rem;">
+            <button class="btn btn-primary" style="width: 100%;" onclick="signContract()">Sign Contract & Initiate Arc</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="brand">WINTER ARC // COMMAND</div>
+        <div class="btn-group">
+            <button class="btn" onclick="openContract()">📜 Contract</button>
+            <button class="btn" onclick="exportState()">💾 Backup</button>
+            <button class="btn btn-primary" onclick="lockDay()">🔒 Lock In Day</button>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Hero Banner with Live Countdown -->
+        <div class="card hero">
+            <div>
+                <h1 style="font-family: 'Orbitron'; font-size: 1.8rem;" id="userName">Operative: Unsigned</h1>
+                <p id="contractStatus" style="color: var(--text-sub); margin-top: 4px;">Contract Pending</p>
+            </div>
+
+            <!-- Live Target Countdown Engine -->
+            <div class="countdown-box">
+                <div class="countdown-unit">
+                    <div class="countdown-num" id="cd-days">00</div>
+                    <div class="countdown-label">Days</div>
+                </div>
+                <span style="color:var(--text-sub); font-weight:700;">:</span>
+                <div class="countdown-unit">
+                    <div class="countdown-num" id="cd-hours">00</div>
+                    <div class="countdown-label">Hrs</div>
+                </div>
+                <span style="color:var(--text-sub); font-weight:700;">:</span>
+                <div class="countdown-unit">
+                    <div class="countdown-num" id="cd-mins">00</div>
+                    <div class="countdown-label">Min</div>
+                </div>
+                <span style="color:var(--text-sub); font-weight:700;">:</span>
+                <div class="countdown-unit">
+                    <div class="countdown-num" id="cd-secs">00</div>
+                    <div class="countdown-label">Sec</div>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-family:'Orbitron'; font-size: 2.2rem; color: var(--accent-cyan);" id="scorePercentage">0%</div>
+                <div style="font-size: 0.8rem; color: var(--text-sub);">Daily Execution</div>
+            </div>
+        </div>
+
+        <!-- Pillar Filters -->
+        <div class="pillar-nav">
+            <div class="pillar-btn active" onclick="filterPillar('All')">ALL PROTOCOLS</div>
+            <div class="pillar-btn" onclick="filterPillar('Fitness')">🏋️ FITNESS</div>
+            <div class="pillar-btn" onclick="filterPillar('Mindfulness')">🧘 MINDFULNESS</div>
+            <div class="pillar-btn" onclick="filterPillar('Intelligence')">🧠 INTELLIGENCE</div>
+            <div class="pillar-btn" onclick="filterPillar('Creativity')">🎨 CREATIVITY</div>
+        </div>
+
+        <!-- Main Tracker -->
+        <div class="tracker-main">
+            <!-- Protocols List -->
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <h3>Active Protocols</h3>
+                    <button class="btn" onclick="addCustomTask()">+ Add Protocol</button>
+                </div>
+                <div id="taskList"></div>
+            </div>
+
+            <!-- Daily Reflection Journal Section -->
+            <div class="card">
+                <h3>Daily Reflection Journal</h3>
+                <p style="font-size:0.8rem; color:var(--text-sub); margin-top:4px;">Log key achievements, mindsets, obstacles, or lessons learned today.</p>
+                <textarea class="journal-input" id="journalText" placeholder="Write today's reflection here... (Auto-saves continuously)" oninput="saveJournal()"></textarea>
+            </div>
+        </div>
+
+        <!-- Sidebar Tools -->
+        <div class="side-bar">
+            <!-- Streak Protection -->
+            <div class="card">
+                <h3>Streak Engine</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-cyan);" id="streakVal">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">Day Streak</div>
+                    </div>
+                    <button class="btn" onclick="recoverStreak()" style="border-color: var(--accent-gold); color: var(--accent-gold);">⚡ Streak Recovery</button>
+                </div>
+            </div>
+
+            <!-- Macro Engine -->
+            <div class="card">
+                <h3>Macro & Fitness Calculator</h3>
+                <div style="display:flex; flex-direction:column; gap: 0.5rem; margin-top:0.75rem;">
+                    <input type="number" id="weightInput" placeholder="Weight (kg)" style="padding:0.5rem; background:var(--bg-panel); border:1px solid var(--border-card); color:#fff; border-radius:6px;">
+                    <button class="btn btn-primary" onclick="calcMacros()">Calculate Targets</button>
+                    <div id="macroResults" style="font-size: 0.8rem; color: var(--text-sub); margin-top: 0.5rem;"></div>
+                </div>
+            </div>
+
+            <!-- Milestones -->
+            <div class="card">
+                <h3>Milestone Badges</h3>
+                <div class="badge-grid">
+                    <div class="badge" id="b7">🛡️<br>7D</div>
+                    <div class="badge" id="b21">⚔️<br>21D</div>
+                    <div class="badge" id="b30">🔥<br>30D</div>
+                    <div class="badge" id="b60">⚡<br>60D</div>
+                    <div class="badge" id="b90">👑<br>90D</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TODAY_KEY = new Date().toISOString().split('T')[0];
+        let currentFilter = 'All';
+
+        let state = JSON.parse(localStorage.getItem('wa_elite_state')) || {
+            user: 'Operative',
+            signed: false,
+            streak: 0,
+            journals: {},
+            tasks: [
+                { id: 1, title: '5:00 AM Wake Up', pillar: 'Mindfulness', done: false },
+                { id: 2, title: '2x Workouts (Strength/Cardio)', pillar: 'Fitness', done: false },
+                { id: 3, title: 'Read 20 Pages', pillar: 'Intelligence', done: false },
+                { id: 4, title: '1 Hour Deep Work / Build', pillar: 'Creativity', done: false }
+            ]
+        };
+
+        if(!state.journals) state.journals = {};
+
+        function saveState() {
+            localStorage.setItem('wa_elite_state', JSON.stringify(state));
+            render();
+        }
+
+        function saveJournal() {
+            const text = document.getElementById('journalText').value;
+            state.journals[TODAY_KEY] = text;
+            localStorage.setItem('wa_elite_state', JSON.stringify(state));
+        }
+
+        function updateRemainingCountdown() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            let targetDate = new Date(`December 31, ${currentYear} 23:59:59`);
+            
+            if (now > targetDate) {
+                targetDate = new Date(`December 31, ${currentYear + 1} 23:59:59`);
+            }
+
+            const diff = targetDate - now;
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('cd-days').innerText = String(days).padStart(2, '0');
+            document.getElementById('cd-hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('cd-mins').innerText = String(mins).padStart(2, '0');
+            document.getElementById('cd-secs').innerText = String(secs).padStart(2, '0');
+        }
+
+        setInterval(updateRemainingCountdown, 1000);
+        updateRemainingCountdown();
+
+        function openContract() { document.getElementById('contractModal').style.display = 'flex'; }
+        function signContract() {
+            const name = document.getElementById('signerName').value;
+            if(name) {
+                state.user = name;
+                state.signed = true;
+                document.getElementById('contractModal').style.display = 'none';
+                saveState();
+            }
+        }
+
+        function filterPillar(p) {
+            currentFilter = p;
+            document.querySelectorAll('.pillar-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            render();
+        }
+
+        function toggleTask(id) {
+            state.tasks = state.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+            saveState();
+        }
+
+        function addCustomTask() {
+            const title = prompt("Protocol Name:");
+            const pillar = prompt("Pillar (Fitness, Mindfulness, Intelligence, Creativity):") || 'Fitness';
+            if(title) {
+                state.tasks.push({ id: Date.now(), title, pillar, done: false });
+                saveState();
+            }
+        }
+
+        function lockDay() {
+            const done = state.tasks.filter(t => t.done).length;
+            const pct = Math.round((done / state.tasks.length) * 100);
+            if(pct === 100) {
+                state.streak += 1;
+                alert("Day locked in at 100%! Streak incremented. 🔥");
+            } else {
+                alert("You haven't completed all protocols today.");
+            }
+            saveState();
+        }
+
+        function recoverStreak() {
+            if(confirm("Use 1-time Streak Protection to restore your momentum?")) {
+                state.streak += 1;
+                saveState();
+            }
+        }
+
+        function calcMacros() {
+            const w = parseFloat(document.getElementById('weightInput').value);
+            if(w) {
+                const protein = (w * 2.2).toFixed(0);
+                const water = (w * 0.045).toFixed(1);
+                document.getElementById('macroResults').innerHTML = `
+                    <b>Daily Targets:</b><br>
+                    • Protein: ${protein}g<br>
+                    • Water: ${water} Liters
+                `;
+            }
+        }
+
+        function render() {
+            document.getElementById('userName').innerText = `Operative: ${state.user}`;
+            document.getElementById('contractStatus').innerText = state.signed ? "Status: Contract Active ⚡" : "Status: Contract Unsigned";
+            document.getElementById('streakVal').innerText = state.streak;
+            document.getElementById('journalText').value = state.journals[TODAY_KEY] || '';
+
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+
+            const filtered = currentFilter === 'All' ? state.tasks : state.tasks.filter(t => t.pillar === currentFilter);
+
+            filtered.forEach(t => {
+                const row = document.createElement('div');
+                row.className = `task-row ${t.done ? 'done' : ''}`;
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div class="checkbox" onclick="toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
+                        <span class="task-title">${t.title}</span>
+                    </div>
+                    <span style="font-size:0.7rem; background:var(--bg-card); padding:0.2rem 0.5rem; border-radius:4px; color:var(--text-sub);">${t.pillar}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            const totalDone = state.tasks.filter(t => t.done).length;
+            const pct = state.tasks.length ? Math.round((totalDone / state.tasks.length) * 100) : 0;
+            document.getElementById('scorePercentage').innerText = `${pct}%`;
+
+            [7, 21, 30, 60, 90].forEach(m => {
+                const b = document.getElementById(`b${m}`);
+                if(state.streak >= m) b.classList.add('unlocked');
+            });
+        }
+
+        function exportState() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "winter_arc_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        if(!state.signed) openContract();
+        render();
+    </script>
+</body>
+</html>
