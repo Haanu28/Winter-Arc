@@ -176,7 +176,7 @@
             filtered.forEach(t => {
                 const row = document.createElement('div');
                 row.className = `task-row ${t.done ? 'done' : ''}`;
-                row.setAttribute('onclick', `toggleTask('${t.id}')`);
+                row.setAttribute('onclick', `toggleTask(' ${t.id} ')`);
                 row.innerHTML = `
                     <div style="display:flex; align-items:center; gap:0.75rem;">
                         <div class="checkbox">${t.done ? '✓' : ''}</div>
