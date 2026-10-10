@@ -187,14 +187,40 @@ header { display: flex; justify-content: space-between; align-items: center; mar
       </div>
     </div>
 
-    <div class="card">
-      <h3>Macro & Fitness Calculator</h3>
-      <div style="display:flex; flex-direction:column; gap: 0.5rem; margin-top:0.75rem;">
-        <input type="number" id="weightInput" placeholder="Weight (kg)" style="padding:0.5rem; background:var(--bg-panel); border:1px solid var(--border-card); color:#fff; border-radius:6px;">
-        <button class="btn btn-primary" onclick="calcMacros()">Calculate Targets</button>
-        <div id="macroResults" style="font-size: 0.8rem; color: var(--text-sub); margin-top: 0.5rem;"></div>
-      </div>
-    </div>
+   function calcMacros() {
+  const w = parseFloat(document.getElementById('weightInput').value);
+  const goal = document.getElementById('goalSelect').value;
+
+  if (w && w > 0) {
+    // Scientific Estimation formulas based on weight (kg)
+    let baseCalories = w * 30; // General estimation multiplier
+    if (goal === 'cut') baseCalories -= 500;
+    if (goal === 'bulk') baseCalories += 400;
+
+    const protein = (w * 2.2).toFixed(0); // ~2.2g per kg
+    const fats = (w * 0.9).toFixed(0);    // ~0.9g per kg
+    
+    // Remaining calories for carbs (Protein = 4cal, Fat = 9cal, Carb = 4cal)
+    const proteinCalories = protein * 4;
+    const fatCalories = fats * 9;
+    let carbCalories = baseCalories - (proteinCalories + fatCalories);
+    if (carbCalories < 500) carbCalories = 500; // Safe minimum
+    const carbs = (carbCalories / 4).toFixed(0);
+
+    const water = (w * 0.045).toFixed(1);
+
+    document.getElementById('macroResults').innerHTML = `
+      <b>🎯 Daily Target Breakdown:</b><br>
+      • <b>Est. Calories:</b> ~${Math.round(baseCalories)} kcal<br>
+      • <b>Protein:</b> ${protein}g <span style="color:var(--accent-cyan);">(Muscle)</span><br>
+      • <b>Carbohydrates:</b> ${carbs}g <span style="color:var(--accent-cyan);">(Energy)</span><br>
+      • <b>Fats:</b> ${fats}g <span style="color:var(--accent-cyan);">(Hormones)</span><br>
+      • <b>Water Intake:</b> ${water} Liters
+    `;
+  } else {
+    document.getElementById('macroResults').innerHTML = `<span style="color:var(--accent-red);">Please enter a valid weight in kg.</span>`;
+  }
+}
 
     <div class="card">
       <h3>Milestone Badges</h3>
