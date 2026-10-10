@@ -405,5 +405,212 @@ function exportState() {
 if(!state.signed) togglePanel('contractPanel');
 render();
 </script>
+<script>
+const TODAY_KEY = new Date().toISOString().split('T')[0];
+let currentFilter = 'All';
+
+let state = JSON.parse(localStorage.getItem('wa_elite_state')) || {
+  user: 'Operative',
+  signed: false,
+  streak: 0,
+  lastDate: '',
+  lockedDate: '',
+  journals: {},
+  tasks: [
+    { id: 't1', title: '5:00 AM Wake Up', pillar: 'Mindfulness', done: false },
+    { id: 't2', title: '2x Workouts (Strength/Cardio)', pillar: 'Fitness', done: false },
+    { id: 't3', title: 'Read 20 Pages', pillar: 'Intelligence', done: false },
+    { id: 't4', title: '1 Hour Deep Work / Build', pillar: 'Creativity', done: false }
+  ]
+};
+
+if (!state.journals) state.journals = {};
+
+// Daily Reset Check: New day check
+if (state.lastDate !== TODAY_KEY) {
+  state.tasks.forEach(t => t.done = false);
+  state.lastDate = TODAY_KEY;
+  saveState();
+}
+
+function saveState() {
+  localStorage.setItem('wa_elite_state', JSON.stringify(state));
+  render();
+}
+
+function saveJournal() {
+  const text = document.getElementById('journalText').value;
+  state.journals[TODAY_KEY] = text;
+  localStorage.setItem('wa_elite_state', JSON.stringify(state));
+}
+
+// Sleek Toast Notification
+function showNotification(message) {
+  const banner = document.getElementById('notificationBanner');
+  banner.innerText = message;
+  banner.style.display = 'block';
+  setTimeout(() => {
+    banner.style.display = 'none';
+  }, 3000);
+}
+
+// Panel Toggles
+function togglePanel(panelId) {
+  ['addProtocolPanel', 'contractPanel', 'recoveryPanel'].forEach(id => {
+    if(id !== panelId) {
+      document.getElementById(id).style.display = 'none';
+    }
+  });
+  const panel = document.getElementById(panelId);
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+function signContract() {
+  const name = document.getElementById('signerName').value.trim();
+  if(name) {
+    state.user = name;
+    state.signed = true;
+    togglePanel('contractPanel');
+    showNotification("Contract Signed Successfully! Welcome, Operative.");
+    saveState();
+  } else {
+    showNotification("Please enter a valid name.");
+  }
+}
+
+function confirmAddProtocol() {
+  const title = document.getElementById('newProtocolTitle').value.trim();
+  const pillar = document.getElementById('newProtocolPillar').value;
+  if(title) {
+    // Unique ID generation fix using counter/random string
+    const newId = 'task_' + Math.random().toString(36).substr(2, 9);
+    state.tasks.push({ id: newId, title, pillar, done: false });
+    document.getElementById('newProtocolTitle').value = '';
+    togglePanel('addProtocolPanel');
+    showNotification("New protocol added to command registry.");
+    saveState();
+  } else {
+    showNotification("Please enter a protocol title.");
+  }
+}
+
+function confirmRecovery() {
+  state.streak += 1;
+  togglePanel('recoveryPanel');
+  showNotification("Momentum successfully restored (+1 Streak).");
+  saveState();
+}
+
+function updateRemainingCountdown() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  let targetDate = new Date(`December 31, ${currentYear} 23:59:59`);
+  if (now > targetDate) {
+    targetDate = new Date(`December 31, ${currentYear + 1} 23:59:59`);
+  }
+  const diff = targetDate - now;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const secs = Math.floor((diff % (1000 * 60)) / 1000);
+  
+  const dElem = document.getElementById('cd-days');
+  if(dElem) {
+    dElem.innerText = String(days).padStart(2, '0');
+    document.getElementById('cd-hours').innerText = String(hours).padStart(2, '0');
+    document.getElementById('cd-mins').innerText = String(mins).padStart(2, '0');
+    document.getElementById('cd-secs').innerText = String(secs).padStart(2, '0');
+  }
+}
+setInterval(updateRemainingCountdown, 1000);
+updateRemainingCountdown();
+
+function filterPillar(p, btnElement) {
+  currentFilter = p;
+  document.querySelectorAll('.pillar-btn').forEach(btn => btn.classList.remove('active'));
+  if(btnElement) btnElement.classList.add('active');
+  render();
+}
+
+function toggleTask(id) {
+  state.tasks = state.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+  saveState();
+}
+
+function lockDay() {
+  const anyDone = state.tasks.some(t => t.done);
+  if (!anyDone) {
+    showNotification("⚠️ Check at least one protocol before locking in the day.");
+    return;
+  }
+  if (state.lockedDate === TODAY_KEY) {
+    showNotification("ℹ️ This day's streak has already been locked in.");
+    return;
+  }
+  state.streak += 1;
+  state.lockedDate = TODAY_KEY;
+  saveState();
+  showNotification("🔥 Day Locked Successfully! Streak incremented.");
+}
+
+function calcMacros() {
+  const w = parseFloat(document.getElementById('weightInput').value);
+  if(w) {
+    const protein = (w * 2.2).toFixed(0);
+    const water = (w * 0.045).toFixed(1);
+    document.getElementById('macroResults').innerHTML = `<b>Daily Targets:</b><br> • Protein: ${protein}g<br> • Water: ${water} Liters`;
+  }
+}
+
+function render() {
+  document.getElementById('userName').innerText = `Operative: ${state.user}`;
+  document.getElementById('contractStatus').innerText = state.signed ? "Status: Contract Active ⚡" : "Status: Contract Pending";
+  document.getElementById('streakVal').innerText = state.streak;
+  
+  const journalEl = document.getElementById('journalText');
+  if(journalEl && document.activeElement !== journalEl) {
+    journalEl.value = state.journals[TODAY_KEY] || '';
+  }
+
+  const list = document.getElementById('taskList');
+  list.innerHTML = '';
+  const filtered = currentFilter === 'All' ? state.tasks : state.tasks.filter(t => t.pillar === currentFilter);
+  
+  filtered.forEach(t => {
+    const row = document.createElement('div');
+    row.className = `task-row ${t.done ? 'done' : ''}`;
+    row.innerHTML = `
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <div class="checkbox" onclick="toggleTask('${t.id}')">${t.done ? '✓' : ''}</div>
+        <span class="task-title">${t.title}</span>
+      </div>
+      <span style="font-size:0.7rem; background:var(--bg-card); padding:0.2rem 0.5rem; border-radius:4px; color:var(--text-sub);">${t.pillar}</span>
+    `;
+    list.appendChild(row);
+  });
+
+  const totalDone = state.tasks.filter(t => t.done).length;
+  const pct = state.tasks.length ? Math.round((totalDone / state.tasks.length) * 100) : 0;
+  document.getElementById('scorePercentage').innerText = `${pct}%`;
+
+  [7, 21, 30, 60, 90].forEach(m => {
+    const b = document.getElementById(`b${m}`);
+    if(b && state.streak >= m) b.classList.add('unlocked');
+  });
+}
+
+function exportState() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "winter_arc_backup.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
+
+if(!state.signed) togglePanel('contractPanel');
+render();
+</script>
 </body>
 </html>
