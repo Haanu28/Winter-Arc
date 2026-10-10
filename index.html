@@ -34,19 +34,20 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .btn:hover { border-color: var(--accent-cyan); transform: translateY(-1px); }
 .btn-primary { background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; border: none; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
-.card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 14px; padding: 1.5rem; }
+.card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 14px; padding: 1.5rem; position: relative; }
 
-/* Professional Modal Styling */
-.modal { display: none; position: fixed; inset: 0; background: rgba(4, 7, 12, 0.85); backdrop-filter: blur(10px); z-index: 99; align-items: center; justify-content: center; }
-.modal-content { background: var(--bg-card); border: 1px solid var(--accent-cyan); width: 90%; max-width: 450px; border-radius: 16px; padding: 2rem; box-shadow: 0 0 30px rgba(0, 242, 254, 0.15); animation: modalPop 0.3s ease; }
-@keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.modal-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--accent-cyan); margin-bottom: 0.5rem; }
-.modal-desc { color: var(--text-sub); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.4; }
-.form-group { margin-bottom: 1rem; }
-.form-label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-sub); margin-bottom: 0.4rem; font-weight: 700; letter-spacing: 1px; }
-.form-input, .form-select { width: 100%; padding: 0.8rem; background: var(--bg-panel); border: 1px solid var(--border-card); color: #fff; border-radius: 8px; font-size: 0.9rem; }
+/* Professional Expandable / Inline Panels inside Dashboard */
+.action-panel { background: var(--bg-panel); border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; display: none; animation: fadeIn 0.3s ease; box-shadow: 0 0 20px rgba(0, 242, 254, 0.1); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+.panel-title { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: var(--accent-cyan); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+.form-group { margin-bottom: 0.75rem; }
+.form-input, .form-select { width: 100%; padding: 0.7rem; background: var(--bg-dark); border: 1px solid var(--border-card); color: #fff; border-radius: 8px; font-size: 0.85rem; }
 .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent-cyan); }
-.modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+.panel-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+/* Status Notification Banner */
+#notificationBanner { position: fixed; bottom: 20px; right: 20px; background: var(--bg-panel); border: 1px solid var(--accent-cyan); color: var(--text-main); padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); z-index: 999; display: none; font-size: 0.85rem; animation: slideUp 0.3s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .hero { grid-column: span 12; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0b111e, #141c2e); border-left: 4px solid var(--accent-cyan); flex-wrap: wrap; gap: 1rem; }
 .countdown-box { display: flex; gap: 0.75rem; background: var(--bg-panel); padding: 0.75rem 1.25rem; border-radius: 10px; border: 1px solid var(--border-card); align-items: center; }
@@ -74,20 +75,13 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 </head>
 <body>
 
-<!-- Universal Professional Modal -->
-<div class="modal" id="customModal">
-  <div class="modal-content">
-    <h2 class="modal-title" id="modalTitle">TITLE</h2>
-    <p class="modal-desc" id="modalDesc">Description text goes here...</p>
-    <div id="modalBody"></div>
-    <div class="modal-actions" id="modalActions"></div>
-  </div>
-</div>
+<!-- Floating Notification Banner -->
+<div id="notificationBanner">Notification text here...</div>
 
 <header>
   <div class="brand">WINTER ARC // COMMAND</div>
   <div class="btn-group">
-    <button class="btn" onclick="openContractModal()">📜 Contract</button>
+    <button class="btn" onclick="togglePanel('contractPanel')">📜 Contract</button>
     <button class="btn" onclick="exportState()">💾 Backup</button>
     <button class="btn btn-primary" onclick="lockDay()">🔒 Lock In Day</button>
   </div>
@@ -126,8 +120,41 @@ header { display: flex; justify-content: space-between; align-items: center; mar
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
         <h3>Active Protocols</h3>
-        <button class="btn" onclick="openAddProtocolModal()">+ Add Protocol</button>
+        <button class="btn" onclick="togglePanel('addProtocolPanel')">+ Add Protocol</button>
       </div>
+
+      <!-- Professional Inline Add Protocol Panel -->
+      <div class="action-panel" id="addProtocolPanel">
+        <div class="panel-title"><span>⚡ New Protocol Standard</span> <span style="cursor:pointer;" onclick="togglePanel('addProtocolPanel')">✕</span></div>
+        <div class="form-group">
+          <input type="text" id="newProtocolTitle" class="form-input" placeholder="Protocol name (e.g., 5km Run)...">
+        </div>
+        <div class="form-group">
+          <select id="newProtocolPillar" class="form-select">
+            <option value="Fitness">🏋️ Fitness</option>
+            <option value="Mindfulness">🧘 Mindfulness</option>
+            <option value="Intelligence">🧠 Intelligence</option>
+            <option value="Creativity">🎨 Creativity</option>
+          </select>
+        </div>
+        <div class="panel-actions">
+          <button class="btn" style="flex:1;" onclick="togglePanel('addProtocolPanel')">Cancel</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="confirmAddProtocol()">Save Protocol</button>
+        </div>
+      </div>
+
+      <!-- Professional Inline Contract Panel -->
+      <div class="action-panel" id="contractPanel">
+        <div class="panel-title"><span>📜 Winter Arc Elite Contract</span> <span style="cursor:pointer;" onclick="togglePanel('contractPanel')">✕</span></div>
+        <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:0.75rem;">I commit to 90 days of deliberate execution. Zero excuses.</p>
+        <div class="form-group">
+          <input type="text" id="signerName" class="form-input" placeholder="Enter Full Name...">
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-primary" style="width:100%;" onclick="signContract()">Sign Contract & Initiate</button>
+        </div>
+      </div>
+
       <div id="taskList"></div>
     </div>
 
@@ -146,7 +173,17 @@ header { display: flex; justify-content: space-between; align-items: center; mar
           <div style="font-size: 2rem; font-weight: 800; color: var(--accent-cyan);" id="streakVal">0</div>
           <div style="font-size: 0.75rem; color: var(--text-sub);">Day Streak</div>
         </div>
-        <button class="btn" onclick="openStreakRecoveryModal()" style="border-color: var(--accent-gold); color: var(--accent-gold);">⚡ Streak Recovery</button>
+        <button class="btn" onclick="togglePanel('recoveryPanel')" style="border-color: var(--accent-gold); color: var(--accent-gold);">⚡ Streak Recovery</button>
+      </div>
+
+      <!-- Professional Inline Streak Recovery Panel -->
+      <div class="action-panel" id="recoveryPanel" style="margin-top:1rem;">
+        <div class="panel-title" style="color:var(--accent-gold);"><span>⚡ Momentum Restoration</span> <span style="cursor:pointer;" onclick="togglePanel('recoveryPanel')">✕</span></div>
+        <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:0.75rem;">Use a one-time recovery protocol if a streak day was missed.</p>
+        <div class="panel-actions">
+          <button class="btn" style="flex:1;" onclick="togglePanel('recoveryPanel')">Dismiss</button>
+          <button class="btn btn-primary" style="flex:1; background:var(--accent-gold); color:#000;" onclick="confirmRecovery()">Restore +1</button>
+        </div>
       </div>
     </div>
 
@@ -210,26 +247,25 @@ function saveJournal() {
   localStorage.setItem('wa_elite_state', JSON.stringify(state));
 }
 
-// Professional Modal Controller System
-function showModal(title, desc, bodyHTML, actionsHTML) {
-  document.getElementById('modalTitle').innerText = title;
-  document.getElementById('modalDesc').innerText = desc;
-  document.getElementById('modalBody').innerHTML = bodyHTML;
-  document.getElementById('modalActions').innerHTML = actionsHTML;
-  document.getElementById('customModal').style.display = 'flex';
+// Sleek Notification Toast Banner instead of Alert
+function showNotification(message) {
+  const banner = document.getElementById('notificationBanner');
+  banner.innerText = message;
+  banner.style.display = 'block';
+  setTimeout(() => {
+    banner.style.display = 'none';
+  }, 3000);
 }
 
-function closeModal() {
-  document.getElementById('customModal').style.display = 'none';
-}
-
-function openContractModal() {
-  showModal(
-    "WINTER ARC CONTRACT",
-    "I commit to 90 days of deliberate execution. Zero excuses. Absolute discipline.",
-    `<div class="form-group"><label class="form-label">Operative Full Name</label><input type="text" id="signerName" class="form-input" placeholder="Enter your name..."></div>`,
-    `<button class="btn btn-primary" style="width:100%;" onclick="signContract()">Sign Contract & Initiate Arc</button>`
-  );
+// Inline Accordion Panel Toggle
+function togglePanel(panelId) {
+  ['addProtocolPanel', 'contractPanel', 'recoveryPanel'].forEach(id => {
+    if(id !== panelId) {
+      document.getElementById(id).style.display = 'none';
+    }
+  });
+  const panel = document.getElementById(panelId);
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 }
 
 function signContract() {
@@ -237,26 +273,12 @@ function signContract() {
   if(name) {
     state.user = name;
     state.signed = true;
-    closeModal();
+    togglePanel('contractPanel');
+    showNotification("Contract Signed Successfully! Welcome, Operative.");
     saveState();
+  } else {
+    showNotification("Please enter a valid name.");
   }
-}
-
-function openAddProtocolModal() {
-  showModal(
-    "ADD NEW PROTOCOL",
-    "Define a new daily execution standard for your routine.",
-    `<div class="form-group"><label class="form-label">Protocol Title</label><input type="text" id="newProtocolTitle" class="form-input" placeholder="e.g. Cold Plunge 5 Mins"></div>
-     <div class="form-group"><label class="form-label">Select Pillar</label>
-     <select id="newProtocolPillar" class="form-select">
-       <option value="Fitness">🏋️ Fitness</option>
-       <option value="Mindfulness">🧘 Mindfulness</option>
-       <option value="Intelligence">🧠 Intelligence</option>
-       <option value="Creativity">🎨 Creativity</option>
-     </select></div>`,
-    `<button class="btn" style="flex:1;" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" style="flex:1;" onclick="confirmAddProtocol()">Add Protocol</button>`
-  );
 }
 
 function confirmAddProtocol() {
@@ -264,26 +286,20 @@ function confirmAddProtocol() {
   const pillar = document.getElementById('newProtocolPillar').value;
   if(title) {
     state.tasks.push({ id: Date.now(), title, pillar, done: false });
-    closeModal();
+    document.getElementById('newProtocolTitle').value = '';
+    togglePanel('addProtocolPanel');
+    showNotification("New protocol added to command registry.");
     saveState();
+  } else {
+    showNotification("Please enter a protocol title.");
   }
-}
-
-function openStreakRecoveryModal() {
-  showModal(
-    "STREAK PROTECTION",
-    "Use a one-time elite recovery protocol to restore momentum if a day was missed.",
-    `<p style="font-size:0.9krem; color:var(--accent-gold); margin-bottom:1rem;">⚠️ This will add +1 day to your active streak accumulator.</p>`,
-    `<button class="btn" style="flex:1;" onclick="closeModal()">Dismiss</button>
-     <button class="btn btn-primary" style="flex:1; background:var(--accent-gold); color:#000;" onclick="confirmRecovery()">Restore Streak</button>`
-  );
 }
 
 function confirmRecovery() {
   state.streak += 1;
-  closeModal();
+  togglePanel('recoveryPanel');
+  showNotification("Momentum successfully restored (+1 Streak).");
   saveState();
-  showModal("SUCCESS", "Momentum successfully restored.", "", `<button class="btn btn-primary" style="width:100%;" onclick="closeModal()">Continue</button>`);
 }
 
 function updateRemainingCountdown() {
@@ -321,17 +337,17 @@ function toggleTask(id) {
 function lockDay() {
   const anyDone = state.tasks.some(t => t.done);
   if (!anyDone) {
-    showModal("ACTION REQUIRED", "You must check at least one protocol before locking in the day.", "", `<button class="btn btn-primary" style="width:100%;" onclick="closeModal()">Understood</button>`);
+    showNotification("⚠️ Check at least one protocol before locking in the day.");
     return;
   }
   if (state.lockedDate === TODAY_KEY) {
-    showModal("LOCKED ALREADY", "This day's streak has already been locked in successfully.", "", `<button class="btn btn-primary" style="width:100%;" onclick="closeModal()">Okay</button>`);
+    showNotification("ℹ️ This day's streak has already been locked in.");
     return;
   }
   state.streak += 1;
   state.lockedDate = TODAY_KEY;
   saveState();
-  showModal("DAY LOCKED", "Streak successfully incremented. Absolute discipline maintained. 🔥", "", `<button class="btn btn-primary" style="width:100%;" onclick="closeModal()">Continue</button>`);
+  showNotification("🔥 Day Locked Successfully! Streak incremented.");
 }
 
 function calcMacros() {
@@ -386,7 +402,7 @@ function exportState() {
   downloadAnchor.remove();
 }
 
-if(!state.signed) openContractModal();
+if(!state.signed) togglePanel('contractPanel');
 render();
 </script>
 </body>
