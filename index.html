@@ -412,5 +412,62 @@
         if(!state.signed) openContract();
         render();
     </script>
+    // Daily Reset & Date Check Logic
+const today = new Date().toDateString();
+const lastDate = localStorage.getItem('lastDate');
+
+if (lastDate !== today) {
+  // Naya din shuru hone par protocols uncheck kar dein
+  document.querySelectorAll('.protocol-checkbox').forEach(cb => cb.checked = false);
+  localStorage.setItem('lastDate', today);
+}
+
+// Streak aur Execution Percentage Update karne ka function
+function updateEngine() {
+  const checkboxes = document.querySelectorAll('.protocol-checkbox');
+  let total = checkboxes.length;
+  let checkedCount = 0;
+  let anyChecked = false;
+
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      checkedCount++;
+      anyChecked = true;
+    }
+  });
+
+  // 1. Agar koi aik protocol bhi tick ho jaye, toh streak count ho
+  let streak = parseInt(localStorage.getItem('streak') || '0');
+  const lastStreakDate = localStorage.getItem('lastStreakDate');
+
+  if (anyChecked && lastStreakDate !== today) {
+    streak++;
+    localStorage.setItem('streak', streak);
+    localStorage.setItem('lastStreakDate', today);
+  }
+
+  // 2. Overall Execution Percentage calculate karein
+  let percentage = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
+  
+  // UI par values show karein (elements ki IDs aapki file ke mutabiq honi chahiyein)
+  document.getElementById('streak-count').innerText = streak;
+  document.getElementById('execution-percentage').innerText = percentage + '%';
+
+  // State save karein
+  checkboxes.forEach((cb, index) => {
+    localStorage.setItem('cb_' + index, cb.checked);
+  });
+}
+
+// Event listeners add karein har checkbox par
+document.querySelectorAll('.protocol-checkbox').forEach((cb, index) => {
+  // Pehle ki saved state load karein
+  if (localStorage.getItem('cb_' + index) === 'true' && lastDate === today) {
+    cb.checked = true;
+  }
+  cb.addEventListener('change', updateEngine);
+});
+
+updateEngine();
 </body>
 </html>
