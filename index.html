@@ -290,4 +290,18 @@
                 </div>
                 <span style="color:var(--text-sub); font-weight:700;">:</span>
                 <div class="countdown-unit">
-                    <div class="countdown-num
+                    <div class="countdown-num" id="cd-secs">00</div>
+                    <div class="countdown-label">Sec</div>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-family:'Orbitron'; font-size: 2.2rem; color: var(--accent-cyan);" id="scorePercentage">0%</div>
+                <div style="font-size: 0.8rem; color: var(--text-sub);">Daily Execution</div>
+            </div>
+        </div>
+
+        <div class="pillar-nav">
+            <div class="pillar-btn active" onclick="filterPillar('All')">ALL PROTOCOLS</div>
+            <div class="pillar-btn" onclick="filterPillar('Fitness')">🏋️ FITNESS</div>
+            <div class="pillar-btn" onclick="filterPillar('Mindfulness')">🧘 MINDFULNESS</div>
