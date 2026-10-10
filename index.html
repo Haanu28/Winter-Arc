@@ -363,12 +363,10 @@
         const TODAY_KEY = new Date().toISOString().split('T')[0];
         let currentFilter = 'All';
         
-        let savedState = JSON.parse(localStorage.getItem('wa_elite_state'));
-        let state = savedState || {
+        let state = JSON.parse(localStorage.getItem('wa_elite_state')) || {
             user: 'Operative',
             signed: false,
             streak: 0,
-            lastLockedDate: null,
             journals: {},
             tasks: [
                 { id: 1, title: '5:00 AM Wake Up', pillar: 'Mindfulness', done: false },
@@ -377,11 +375,6 @@
                 { id: 4, title: '1 Hour Deep Work / Build', pillar: 'Creativity', done: false }
             ]
         };
-
-        // Ensure lastLockedDate exists even for older saved sessions
-        if (state.lastLockedDate === undefined) {
-            state.lastLockedDate = null;
-        }
 
         if(!state.journals) state.journals = {};
 
@@ -454,18 +447,12 @@
 
         function lockDay() {
             const done = state.tasks.filter(t => t.done).length;
-            const pct = state.tasks.length ? Math.round((done / state.tasks.length) * 100) : 0;
-            
+            const pct = Math.round((done / state.tasks.length) * 100);
             if(pct === 100) {
-                if(state.lastLockedDate === TODAY_KEY) {
-                    alert("⚠️ You have already locked in your streak for today! Come back tomorrow.");
-                    return;
-                }
                 state.streak += 1;
-                state.lastLockedDate = TODAY_KEY;
                 alert("Day locked in at 100%! Streak incremented. 🔥");
             } else {
-                alert("You haven't completed all protocols today (100% required).");
+                alert("You haven't completed all protocols today.");
             }
             saveState();
         }
