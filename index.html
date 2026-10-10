@@ -1,37 +1,203 @@
-function render() {
-    document.getElementById('userName').innerText = `Operative: ${state.user}`;
-    document.getElementById('contractStatus').innerText = state.signed ? "Status: Contract Active ⚡" : "Status: Contract Pending";
-    document.getElementById('streakVal').innerText = state.streak;
-    
-    const journalEl = document.getElementById('journalText');
-    if (journalEl && document.activeElement !== journalEl) {
-        journalEl.value = state.journals[TODAY_KEY] || '';
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winter Arc // Elite Command</title>
+    <style>
+        :root {
+            --bg-main: #0a0a0c;
+            --bg-card: #141418;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border: #27272a;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: monospace, sans-serif;
+        }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 8px;
+        }
+        .card h3 {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin-bottom: 0.5rem;
+        }
+        .card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        .task-row {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .task-row:hover {
+            border-color: var(--accent);
+        }
+        .task-row.done {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .task-title {
+            font-size: 0.95rem;
+        }
+        textarea {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 1rem;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
 
-    const list = document.getElementById('taskList');
-    list.innerHTML = '';
-    const filtered = currentFilter === 'All' ? state.tasks : state.tasks.filter(t => t.pillar === currentFilter);
-    
-    filtered.forEach(t => {
-        const row = document.createElement('div');
-        row.className = `task-row ${t.done ? 'done' : ''}`;
-        row.setAttribute('onclick', `toggleTask('${t.id}')`);
-        row.innerHTML = `
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-                <div class="checkbox">${t.done ? '✓' : ''}</div>
-                <span class="task-title">${t.title}</span>
-            </div>
-            <span style="font-size:0.7rem; background:var(--bg-card); padding:0.2rem 0.5rem; border-radius:4px; color:var(--text-sub);">${t.pillar}</span>
-        `;
-        list.appendChild(row);
-    });
+    <header>
+        <h1 id="userName">Operative: Loading...</h1>
+        <div id="contractStatus" style="font-size: 0.85rem; color: var(--accent);">Status: Checking...</div>
+    </header>
 
-    const totalDone = state.tasks.filter(t => t.done).length;
-    const pct = state.tasks.length ? Math.round((totalDone / state.tasks.length) * 100) : 0;
-    document.getElementById('scorePercentage').innerText = `${pct}%`;
+    <div class="stats-grid">
+        <div class="card">
+            <h3>Current Streak</h3>
+            <div class="value" id="streakVal">0</div>
+        </div>
+        <div class="card">
+            <h3>Completion Rate</h3>
+            <div class="value" id="scorePercentage">0%</div>
+        </div>
+    </div>
 
-    [7, 21, 30, 60, 90].forEach(m => {
-        const b = document.getElementById(`b${m}`);
-        if (b && state.streak >= m) b.classList.add('unlocked');
-    });
-}
+    <div class="task-list" id="taskList">
+        <!-- Tasks will inject here -->
+    </div>
+
+    <div class="card">
+        <h3>Daily Operational Journal</h3>
+        <textarea id="journalText" placeholder="Log your progress here..."></textarea>
+    </div>
+
+    <script>
+        const TODAY_KEY = new Date().toISOString().split('T')[0];
+        
+        let state = {
+            user: "Agent",
+            signed: true,
+            streak: 5,
+            tasks: [
+                { id: "t1", title: "Morning Physical Protocol", pillar: "Fitness", done: false },
+                { id: "t2", title: "Deep Work / Code Session", pillar: "Skill", done: false },
+                { id: "t3", title: "Hydration & Nutrition Target", pillar: "Health", done: false }
+            ],
+            journals: {}
+        };
+
+        let currentFilter = 'All';
+
+        function toggleTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.done = !task.done;
+                render();
+            }
+        }
+
+        function render() {
+            document.getElementById('userName').innerText = `Operative: ${state.user}`;
+            document.getElementById('contractStatus').innerText = state.signed ? "Status: Contract Active ⚡" : "Status: Contract Pending";
+            document.getElementById('streakVal').innerText = state.streak;
+            
+            const journalEl = document.getElementById('journalText');
+            if (journalEl && document.activeElement !== journalEl) {
+                journalEl.value = state.journals[TODAY_KEY] || '';
+            }
+
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            const filtered = currentFilter === 'All' ? state.tasks : state.tasks.filter(t => t.pillar === currentFilter);
+            
+            filtered.forEach(t => {
+                const row = document.createElement('div');
+                row.className = `task-row ${t.done ? 'done' : ''}`;
+                row.setAttribute('onclick', `toggleTask('${t.id}')`);
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div class="checkbox">${t.done ? '✓' : ''}</div>
+                        <span class="task-title">${t.title}</span>
+                    </div>
+                    <span style="font-size:0.7rem; background:var(--bg-card); padding:0.2rem 0.5rem; border-radius:4px; color:var(--text-sub);">${t.pillar}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            const totalDone = state.tasks.filter(t => t.done).length;
+            const pct = state.tasks.length ? Math.round((totalDone / state.tasks.length) * 100) : 0;
+            document.getElementById('scorePercentage').innerText = `${pct}%`;
+
+            [7, 21, 30, 60, 90].forEach(m => {
+                const b = document.getElementById(`b${m}`);
+                if (b && state.streak >= m) b.classList.add('unlocked');
+            });
+        }
+
+        render();
+    </script>
+</body>
+</html>
