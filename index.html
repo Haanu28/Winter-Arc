@@ -367,6 +367,7 @@
             user: 'Operative',
             signed: false,
             streak: 0,
+            lastLockedDate: null,
             journals: {},
             tasks: [
                 { id: 1, title: '5:00 AM Wake Up', pillar: 'Mindfulness', done: false },
@@ -448,11 +449,17 @@
         function lockDay() {
             const done = state.tasks.filter(t => t.done).length;
             const pct = Math.round((done / state.tasks.length) * 100);
+            
             if(pct === 100) {
+                if(state.lastLockedDate === TODAY_KEY) {
+                    alert("⚠️ You have already locked in your streak for today! Come back tomorrow for the next day.");
+                    return;
+                }
                 state.streak += 1;
+                state.lastLockedDate = TODAY_KEY;
                 alert("Day locked in at 100%! Streak incremented. 🔥");
             } else {
-                alert("You haven't completed all protocols today.");
+                alert("You haven't completed all protocols today (100% required).");
             }
             saveState();
         }
