@@ -509,4 +509,27 @@
             });
 
             const totalDone = state.tasks.filter(t => t.done).length;
-            const pct = state.tasks.length ? Math.round((totalDone
+            const pct = state.tasks.length ? Math.round((totalDone / state.tasks.length) * 100) : 0;
+            document.getElementById('scorePercentage').innerText = `${pct}%`;
+
+            [7, 21, 30, 60, 90].forEach(m => {
+                const b = document.getElementById(`b${m}`);
+                if(b && state.streak >= m) b.classList.add('unlocked');
+            });
+        }
+
+        function exportState() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "winter_arc_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        if(!state.signed) openContract();
+        render();
+    </script>
+</body>
+</html>
